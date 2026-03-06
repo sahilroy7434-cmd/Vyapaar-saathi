@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Vyapaar Saathi</title>
+
+<style>
+body{
+font-family:Arial;
+margin:0;
+background:#121212;
+color:white;
+}
+
+header{
+background:#1e1e1e;
+padding:15px;
+text-align:center;
+font-size:20px;
+}
+
+.container{
+padding:15px;
+margin-bottom:70px;
+}
+
+input,select{
+padding:10px;
+margin:5px;
+width:95%;
+}
+
+button{
+padding:10px;
+margin:5px;
+background:#2c2c2c;
+color:white;
+border:none;
+}
+
+.card{
+background:#1f1f1f;
+padding:15px;
+margin-top:10px;
+}
+
+.bottomnav{
+position:fixed;
+bottom:0;
+width:100%;
+display:flex;
+justify-content:space-around;
+background:#1e1e1e;
+padding:10px;
+}
+
+.hidden{
+display:none;
+}
+</style>
+</head>
+
+<body>
+
+<header>Vyapaar Saathi</header>
+
+<div id="languagePage" class="container">
+
+<h2>Select Language</h2>
+
+<select id="language">
+<option value="">Choose Language</option>
+<option>English</option>
+<option>Hindi</option>
+<option>Bengali</option>
+<option>Tamil</option>
+<option>Telugu</option>
+<option>Marathi</option>
+</select>
+
+<button onclick="goToProfile()">Next</button>
+
+</div>
+
+<div id="profileSetup" class="container hidden">
+
+<h2>Profile Setup</h2>
+
+<input id="name" placeholder="Your Name">
+
+<input type="date" id="dob">
+
+<input id="work" placeholder="Your Profession">
+
+<button onclick="startApp()">Start App</button>
+
+</div>
+
+<div id="home" class="container hidden">
+
+<h2 data-lang="totalsales">Total Sales ₹ <span id="totalSales">0</span></h2>
+
+<input id="saleAmount" placeholder="Sale Amount">
+
+<input id="saleNote" placeholder="Sale Source / Note">
+
+<button onclick="addSale()" data-lang="addsale">Add Sale</button>
+
+<h3 data-lang="saleshistory">Sales History</h3>
+
+<ul id="salesList"></ul>
+
+</div>
+
+</div>
+
+<div id="tasks" class="container hidden">
+
+<h2 data-lang="tasks">Tasks</h2>
+
+<button onclick="addTask()" data-lang="addtask">Add Task</button>
+
+<ul id="taskList"></ul>
+
+</div>
+
+<div id="records" class="container hidden">
+
+<h2>Records</h2>
+
+<h2 data-lang="records">Records</h2>
+
+<button onclick="openSalary()" data-lang="salary">Salary</button>
+<button onclick="openSavings()" data-lang="savings">Savings</button>
+<button onclick="openExpenses()" data-lang="expenses">Expenses</button>
+
+<div id="recordArea"></div>
+
+</div>
+
+<div id="profile" class="container hidden">
+
+<h2 data-lang="profile">Profile</h2>
+
+<p id="profileInfo"></p>
+
+<button onclick="toggleDark()" data-lang="darkmode">Dark Mode</button>
+
+<button onclick="alert('Notifications toggled')" data-lang="notifications">Notifications</button>
+
+<button onclick="alert('Language change coming soon')" data-lang="changelang">Change Language</button>
+
+<button onclick="alert('Privacy Policy: data stays on device')" data-lang="privacy">Privacy Policy</button>
+
+<button onclick="resetApp()" data-lang="reset">Reset App</button>
+
+</div>
+
+<div class="bottomnav">
+
+<button class="navHome" onclick="showPage('home')" data-lang="home">Home</button>
+<button class="navTasks" onclick="showPage('tasks')" data-lang="tasks">Tasks</button>
+<button class="navRecords" onclick="showPage('records')" data-lang="records">Records</button>
+<button class="navProfile" onclick="showPage('profile')" data-lang="profile">Profile</button>
+
+</div>
+
+<script>
+
+let sales=JSON.parse(localStorage.getItem("sales"))||[]
+let tasks=JSON.parse(localStorage.getItem("tasks"))||[]
+let employees=JSON.parse(localStorage.getItem("employees"))||[]
+let savings=JSON.parse(localStorage.getItem("savings"))||[]
+let expenses=JSON.parse(localStorage.getItem("expenses"))||[]
+
+window.onload=function(){
+
+let profile=localStorage.getItem("profile")
+
+if(profile){
+
+document.getElementById("languagePage").classList.add("hidden")
+document.getElementById("profileSetup").classList.add("hidden")
+document.getElementById("home").classList.remove("hidden")
+
+loadProfile()
+renderSales()
+renderTasks()
+applyLanguage()
+
+}
+
+}
+
+const languageData = {
+
+English:{
+home:"Home",
+tasks:"Tasks",
+records:"Records",
+profile:"Profile",
+totalsales:"Total Sales",
+addsale:"Add Sale",
+saleshistory:"Sales History",
+addtask:"Add Task",
+salary:"Salary",
+savings:"Savings",
+expenses:"Expenses",
+darkmode:"Dark Mode"
+},
+
+Hindi:{
+home:"होम",
+tasks:"कार्य",
+records:"रिकॉर्ड",
+profile:"प्रोफ़ाइल",
+totalsales:"कुल बिक्री",
+addsale:"बिक्री जोड़ें",
+saleshistory:"बिक्री इतिहास",
+addtask:"कार्य जोड़ें",
+salary:"वेतन",
+savings:"बचत",
+expenses:"खर्च",
+darkmode:"डार्क मोड"
+},
+
+Bengali:{
+home:"হোম",
+tasks:"কাজ",
+records:"রেকর্ড",
+profile:"প্রোফাইল",
+totalsales:"মোট বিক্রয়",
+addsale:"বিক্রয় যোগ করুন",
+saleshistory:"বিক্রয় ইতিহাস",
+addtask:"কাজ যোগ করুন",
+salary:"বেতন",
+savings:"সঞ্চয়",
+expenses:"খরচ",
+darkmode:"ডার্ক মোড"
+},
+
+Tamil:{
+home:"முகப்பு",
+tasks:"பணி",
+records:"பதிவுகள்",
+profile:"சுயவிவரம்",
+totalsales:"மொத்த விற்பனை",
+addsale:"விற்பனை சேர்க்க",
+saleshistory:"விற்பனை வரலாறு",
+addtask:"பணி சேர்க்க",
+salary:"சம்பளம்",
+savings:"சேமிப்பு",
+expenses:"செலவுகள்",
+darkmode:"இருண்ட முறை"
+},
+
+Telugu:{
+home:"హోమ్",
+tasks:"పనులు",
+records:"రికార్డులు",
+profile:"ప్రొఫైల్",
+totalsales:"మొత్తం అమ్మకాలు",
+addsale:"అమ్మకం జోడించు",
+saleshistory:"అమ్మకాల చరిత్ర",
+addtask:"పని జోడించు",
+salary:"జీతం",
+savings:"సేవింగ్స్",
+expenses:"ఖర్చులు",
+darkmode:"డార్క్ మోడ్"
+},
+
+Marathi:{
+home:"होम",
+tasks:"कामे",
+records:"नोंदी",
+profile:"प्रोफाइल",
+totalsales:"एकूण विक्री",
+addsale:"विक्री जोडा",
+saleshistory:"विक्री इतिहास",
+addtask:"काम जोडा",
+salary:"पगार",
+savings:"बचत",
+expenses:"खर्च",
+darkmode:"डार्क मोड"
+}
+
+}
+
+function applyLanguage(){
+
+let lang = localStorage.getItem("language")
+
+if(!lang) return
+
+let data = languageData[lang]
+
+document.querySelectorAll("[data-lang]").forEach(el => {
+
+let key = el.getAttribute("data-lang")
+
+if(data[key]){
+el.innerText = data[key]
+}
+
+})
+
+}
+
+function getTime(){
+
+let now=new Date()
+
+let date=now.toLocaleDateString()
+let time=now.toLocaleTimeString()
+
+return date+" "+time
+
+}
+
+function goToProfile(){
+
+let lang = document.getElementById("language").value
+
+if(lang == ""){
+alert("Please select a language")
+return
+}
+
+localStorage.setItem("language", lang)
+
+document.getElementById("languagePage").classList.add("hidden")
+document.getElementById("profileSetup").classList.remove("hidden")
+
+}
+
+function resetApp(){
+localStorage.clear()
+location.reload()
+}
+
+function startApp(){
+
+let name=document.getElementById("name").value
+let dob=document.getElementById("dob").value
+let work=document.getElementById("work").value
+
+if(name=="" || dob=="" || work==""){
+alert("All fields are required")
+return
+}
+
+let age=new Date().getFullYear()-new Date(dob).getFullYear()
+
+if(age<18){
+alert("You must be 18+ to use this app")
+return
+}
+
+let profile={
+name:name,
+work:work,
+language:localStorage.getItem("language")
+}
+
+localStorage.setItem("profile",JSON.stringify(profile))
+
+document.getElementById("profileSetup").classList.add("hidden")
+document.getElementById("home").classList.remove("hidden")
+
+loadProfile()
+renderSales()
+renderTasks()
+applyLanguage()
+
+}
+
+function loadProfile(){
+
+let p=JSON.parse(localStorage.getItem("profile"))
+
+if(p){
+document.getElementById("profileInfo").innerText=
+"Name: "+p.name+" | Work: "+p.work+" | Language: "+p.language
+}
+
+}
+
+function addSale(){
+
+let amount=parseFloat(document.getElementById("saleAmount").value)
+let note=document.getElementById("saleNote").value
+
+if(!amount)return
+
+sales.push({
+amount:amount,
+note:note,
+time:getTime()
+})
+
+localStorage.setItem("sales",JSON.stringify(sales))
+
+renderSales()
+
+}
+
+function renderSales(){
+
+let list=document.getElementById("salesList")
+list.innerHTML=""
+
+let total=0
+
+sales.forEach((s,i)=>{
+
+total+=s.amount
+
+let li=document.createElement("li")
+
+li.innerHTML=
+"₹"+s.amount+" - "+s.note+" - "+s.time
+" <button onclick='deleteSale("+i+")'>Delete</button>"
+
+list.appendChild(li)
+
+})
+
+document.getElementById("totalSales").innerText=total
+
+}
+
+function deleteSale(i){
+
+sales.splice(i,1)
+
+localStorage.setItem("sales",JSON.stringify(sales))
+
+renderSales()
+
+}
+
+function addTask(){
+
+let t=document.getElementById("taskInput").value
+
+tasks.push({
+text:t,
+done:false,
+time:getTime()
+})
+
+localStorage.setItem("tasks",JSON.stringify(tasks))
+
+renderTasks()
+
+}
+
+function renderTasks(){
+
+let list=document.getElementById("taskList")
+list.innerHTML=""
+
+tasks.forEach((t,i)=>{
+
+let li=document.createElement("li")
+
+li.innerHTML=
+"<input type='checkbox' "+(t.done?"checked":"")+" onclick='toggleTask("+i+")'> "+t.text+" | "+t.time
+
+list.appendChild(li)
+
+})
+
+}
+
+function toggleTask(i){
+
+tasks[i].done=!tasks[i].done
+
+localStorage.setItem("tasks",JSON.stringify(tasks))
+
+renderTasks()
+
+}
+
+function openSalary(){
+
+let area=document.getElementById("recordArea")
+
+area.innerHTML=`
+<h3>Employees</h3>
+
+<input id="empName" placeholder="Employee Name">
+
+<button onclick="addEmployee()">Add Employee</button>
+
+<ul id="employeeList"></ul>
+`
+
+renderEmployees()
+
+}
+
+function addEmployee(){
+
+let name=document.getElementById("empName").value
+
+if(!name)return
+
+employees.push({name:name,salary:[]})
+
+localStorage.setItem("employees",JSON.stringify(employees))
+
+renderEmployees()
+
+}
+
+function renderEmployees(){
+
+let list=document.getElementById("employeeList")
+list.innerHTML=""
+
+employees.forEach((emp,i)=>{
+
+let li=document.createElement("li")
+
+li.innerHTML=
+"<button onclick='openEmployee("+i+")'>"+emp.name+"</button>"
+
+list.appendChild(li)
+
+})
+
+}
+
+function openEmployee(index){
+
+let emp=employees[index]
+
+let area=document.getElementById("recordArea")
+
+area.innerHTML=`
+
+<h3>${emp.name} Salary</h3>
+
+<input id="salaryAmount" placeholder="Salary Amount">
+
+<input id="salaryNote" placeholder="Note (reason)">
+
+<button onclick="addSalary(${index})">Add Salary</button>
+
+<h4>History</h4>
+
+<ul id="salaryHistory"></ul>
+
+<p>Total Paid ₹ <span id="salaryTotal"></span></p>
+
+<button onclick="openSalary()">Back</button>
+
+`
+
+renderSalaryHistory(index)
+
+}
+
+function addSalary(index){
+
+let amount=parseFloat(document.getElementById("salaryAmount").value)
+let note=document.getElementById("salaryNote").value
+let time=getTime()
+
+if(!amount)return
+
+employees[index].salary.push({
+amount:amount,
+note:note,
+time:time
+})
+
+localStorage.setItem("employees",JSON.stringify(employees))
+
+renderSalaryHistory(index)
+
+}
+
+function renderSalaryHistory(index){
+
+let list=document.getElementById("salaryHistory")
+list.innerHTML=""
+
+let total=0
+
+employees[index].salary.forEach((s,i)=>{
+
+total+=s.amount
+
+let li=document.createElement("li")
+
+li.innerHTML=
+"₹"+s.amount+
+" | "+s.note+
+" | "+s.time+
+" <button onclick='deleteSalary("+index+","+i+")'>Delete</button>"
+
+list.appendChild(li)
+
+})
+
+document.getElementById("salaryTotal").innerText=total
+
+}
+
+function deleteSalary(empIndex,salIndex){
+
+employees[empIndex].salary.splice(salIndex,1)
+
+localStorage.setItem("employees",JSON.stringify(employees))
+
+renderSalaryHistory(empIndex)
+
+}
+
+function openSavings(){
+
+let area=document.getElementById("recordArea")
+
+area.innerHTML=`
+<h3>Savings</h3>
+<input id="saveAmt">
+<button onclick="addSaving()">Add</button>
+<ul id="savingList"></ul>
+`
+
+renderSavings()
+
+}
+
+function addSaving(){
+
+let amt=document.getElementById("saveAmt").value
+
+savings.push(amt)
+
+localStorage.setItem("savings",JSON.stringify(savings))
+
+renderSavings()
+
+}
+
+function renderSavings(){
+
+let list=document.getElementById("savingList")
+list.innerHTML=""
+
+savings.forEach((s,i)=>{
+
+let li=document.createElement("li")
+
+li.innerHTML=
+"₹"+s+" <button onclick='deleteSaving("+i+")'>Delete</button>"
+
+list.appendChild(li)
+
+})
+
+}
+
+function deleteSaving(i){
+
+savings.splice(i,1)
+
+localStorage.setItem("savings",JSON.stringify(savings))
+
+renderSavings()
+
+}
+
+function openExpenses(){
+
+let area=document.getElementById("recordArea")
+
+area.innerHTML=`
+<h3>Expenses</h3>
+<input id="expAmt">
+<button onclick="addExpense()">Add</button>
+<ul id="expenseList"></ul>
+`
+
+renderExpenses()
+
+}
+
+function addExpense(){
+
+let amt=document.getElementById("expAmt").value
+
+expenses.push(amt)
+
+localStorage.setItem("expenses",JSON.stringify(expenses))
+
+renderExpenses()
+
+}
+
+function renderExpenses(){
+
+let list=document.getElementById("expenseList")
+list.innerHTML=""
+
+expenses.forEach((e,i)=>{
+
+let li=document.createElement("li")
+
+li.innerHTML=
+"₹"+e+" <button onclick='deleteExpense("+i+")'>Delete</button>"
+
+list.appendChild(li)
+
+})
+
+}
+
+function deleteExpense(i){
+
+expenses.splice(i,1)
+
+localStorage.setItem("expenses",JSON.stringify(expenses))
+
+renderExpenses()
+
+}
+
+function showPage(p){
+
+["home","tasks","records","profile"].forEach(id=>{
+document.getElementById(id).classList.add("hidden")
+})
+
+document.getElementById(p).classList.remove("hidden")
+
+}
+
+function toggleDark(){
+
+if(document.body.style.background=="white"){
+document.body.style.background="#121212"
+document.body.style.color="white"
+}else{
+document.body.style.background="white"
+document.body.style.color="black"
+}
+
+}
+
+</script>
+
+</body>
+</html>
